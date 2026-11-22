@@ -56,7 +56,7 @@ function Segmented<T extends string>({ options, value, onChange, label }: { opti
 
 export function StyleControls({ value, onChange }: Props) {
   const [logoError, setLogoError] = useState<string | null>(null);
-  const warning = contrastWarning(value.fg, value.bg);
+  const warning = contrastWarning(value.fg, value.bg) ?? contrastWarning(value.eyeColor, value.bg);
   const set = (patch: Partial<QrStyle>) => onChange({ ...value, ...patch });
 
   function onLogo(file: File | undefined) {
