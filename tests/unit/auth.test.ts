@@ -25,3 +25,16 @@ describe("auth", () => {
     expect(rateLimit("other-" + Math.random())).toBe(true);
   });
 });
+
+import { clientIp } from "@/lib/rate-limit";
+
+describe("clientIp", () => {
+  it("prefers proxy-set x-real-ip over spoofable x-forwarded-for", () => {
+    const h = new Headers({ "x-forwarded-for": "1.1.1.1, 9.9.9.9", "x-real-ip": "9.9.9.9" });
+    expect(clientIp(h)).toBe("9.9.9.9");
+  });
+  it("falls back to the last x-forwarded-for hop (appended by the proxy)", () => {
+    expect(clientIp(new Headers({ "x-forwarded-for": "1.1.1.1, 8.8.8.8" }))).toBe("8.8.8.8");
+    expect(clientIp(new Headers())).toBe("unknown");
+  });
+});
