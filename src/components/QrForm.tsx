@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { saveQrAction } from "@/app/(admin)/qr/actions";
 import { QrPreview } from "./QrPreview";
 import { StyleControls } from "./StyleControls";
+import { IconAndroid, IconApple, IconCheck, IconGlobe, IconLink, IconRoute, IconTag, IconWarn } from "./icons";
 import { defaultStyle, type QrStyle } from "@/lib/style";
 
 export type QrFormValue = {
@@ -34,6 +35,21 @@ type Props = {
   aside?: React.ReactNode;
 };
 
+function UrlField({ id, icon, label, value, onChange, placeholder, hint, required }: {
+  id: string; icon: React.ReactNode; label: string; value: string; onChange: (v: string) => void; placeholder: string; hint?: string; required?: boolean;
+}) {
+  return (
+    <div>
+      <label className="label" htmlFor={id}>{label}</label>
+      <div className="relative">
+        <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted">{icon}</span>
+        <input id={id} type="url" className="input pl-10" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} required={required} />
+      </div>
+      {hint && <p className="hint">{hint}</p>}
+    </div>
+  );
+}
+
 export function QrForm({ id, initial, shortUrl, slug, aside }: Props) {
   const router = useRouter();
   const [v, setV] = useState(initial);
@@ -61,75 +77,87 @@ export function QrForm({ id, initial, shortUrl, slug, aside }: Props) {
   }
 
   return (
-    <form onSubmit={submit} className="grid gap-8 lg:grid-cols-[1fr_360px]">
+    <form onSubmit={submit} className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8">
       <div className="space-y-6">
-        <div>
-          <label className="label" htmlFor="name">Ad</label>
-          <input id="name" className="input" value={v.name} onChange={(e) => set({ name: e.target.value })} placeholder="Örn. Uygulama X — mağaza broşürü" required maxLength={100} />
-          <p className="hint">Sadece sen görürsün; kodları ayırt etmek için.</p>
-        </div>
+        <section className="panel">
+          <div className="panel-head">
+            <span className="panel-icon"><IconTag /></span>
+            <div>
+              <h2 className="text-base font-medium">Temel bilgiler</h2>
+              <p className="text-xs text-muted">Ad sadece sana görünür.</p>
+            </div>
+          </div>
+          <div className="panel-body">
+            <div>
+              <label className="label" htmlFor="name">Ad</label>
+              <input id="name" className="input" value={v.name} onChange={(e) => set({ name: e.target.value })} placeholder="Örn. Uygulama X, mağaza broşürü" required maxLength={100} />
+            </div>
+            <fieldset>
+              <legend className="label">Tür</legend>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {([
+                  ["store", "Mağaza", "Cihaza göre App Store veya Play Store'a gönderir.", <IconApple key="i" className="h-4 w-4" />],
+                  ["url", "Tek link", "Herkesi aynı adrese gönderir.", <IconLink key="i" />],
+                ] as const).map(([k, title, desc, icon]) => {
+                  const on = v.kind === k;
+                  return (
+                    <label key={k} className={`relative flex cursor-pointer gap-3 rounded-xl border p-3.5 transition-colors ${on ? "border-accent bg-accent-soft/60 ring-4 ring-accent/10" : "border-line bg-surface-2 hover:border-muted/40"}`}>
+                      <input type="radio" name="kind" value={k} checked={on} onChange={() => set({ kind: k })} className="sr-only" />
+                      <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${on ? "bg-accent text-accent-ink" : "bg-surface text-muted ring-1 ring-line"}`}>{icon}</span>
+                      <span>
+                        <span className="block text-sm font-medium">{title}</span>
+                        <span className="block text-xs leading-relaxed text-muted">{desc}</span>
+                      </span>
+                      {on && <IconCheck className="absolute right-3 top-3 h-4 w-4 text-accent" />}
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
+          </div>
+        </section>
 
-        <fieldset>
-          <legend className="label">Tür</legend>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {([
-              ["store", "Mağaza", "Cihaza göre App Store veya Play Store'a gönderir."],
-              ["url", "Tek link", "Herkesi aynı adrese gönderir."],
-            ] as const).map(([k, title, desc]) => (
-              <label key={k} className={`cursor-pointer rounded-lg border bg-surface p-3 ${v.kind === k ? "border-accent ring-2 ring-accent/20" : "border-line"}`}>
-                <input type="radio" name="kind" value={k} checked={v.kind === k} onChange={() => set({ kind: k })} className="sr-only" />
-                <span className="block text-sm font-medium">{title}</span>
-                <span className="block text-xs text-muted">{desc}</span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
-
-        {v.kind === "store" ? (
-          <div className="space-y-4">
+        <section className="panel">
+          <div className="panel-head">
+            <span className="panel-icon"><IconRoute /></span>
             <div>
-              <label className="label" htmlFor="ios">App Store linki</label>
-              <input id="ios" type="url" className="input" value={v.iosUrl} onChange={(e) => set({ iosUrl: e.target.value })} placeholder="https://apps.apple.com/tr/app/…" />
-            </div>
-            <div>
-              <label className="label" htmlFor="android">Play Store linki</label>
-              <input id="android" type="url" className="input" value={v.androidUrl} onChange={(e) => set({ androidUrl: e.target.value })} placeholder="https://play.google.com/store/apps/details?id=…" />
-            </div>
-            <div>
-              <label className="label" htmlFor="fallback">Diğer cihazlar için link</label>
-              <input id="fallback" type="url" className="input" value={v.fallbackUrl} onChange={(e) => set({ fallbackUrl: e.target.value })} placeholder="https://uygulaman.com" required />
-              <p className="hint">Bilgisayardan açanlar ve linki boş bırakılan platform buraya gider.</p>
+              <h2 className="text-base font-medium">Yönlendirme</h2>
+              <p className="text-xs text-muted">İstediğin zaman değiştir; basılmış QR aynı kalır.</p>
             </div>
           </div>
-        ) : (
-          <div>
-            <label className="label" htmlFor="fallback">Hedef link</label>
-            <input id="fallback" type="url" className="input" value={v.fallbackUrl} onChange={(e) => set({ fallbackUrl: e.target.value })} placeholder="https://…" required />
+          <div className="panel-body">
+            {v.kind === "store" ? (
+              <>
+                <UrlField id="ios" icon={<IconApple className="h-4 w-4" />} label="App Store linki" value={v.iosUrl} onChange={(iosUrl) => set({ iosUrl })} placeholder="https://apps.apple.com/tr/app/…" />
+                <UrlField id="android" icon={<IconAndroid className="h-4 w-4" />} label="Play Store linki" value={v.androidUrl} onChange={(androidUrl) => set({ androidUrl })} placeholder="https://play.google.com/store/apps/details?id=…" />
+                <UrlField id="fallback" icon={<IconGlobe className="h-4 w-4" />} label="Diğer cihazlar için link" value={v.fallbackUrl} onChange={(fallbackUrl) => set({ fallbackUrl })} placeholder="https://uygulaman.com" required hint="Bilgisayardan açanlar ve linki boş bırakılan platform buraya gider." />
+              </>
+            ) : (
+              <UrlField id="fallback" icon={<IconLink />} label="Hedef link" value={v.fallbackUrl} onChange={(fallbackUrl) => set({ fallbackUrl })} placeholder="https://…" required />
+            )}
           </div>
-        )}
+        </section>
 
         <StyleControls value={v.style} onChange={(style) => set({ style })} />
 
-        {error && <p className="rounded-lg bg-danger/8 px-3 py-2 text-sm text-danger" role="alert">{error}</p>}
-        <div className="flex items-center gap-3">
+        <div className="sticky bottom-4 z-[2] flex flex-wrap items-center gap-3 rounded-2xl border border-line bg-surface/90 px-4 py-3 shadow-panel backdrop-blur">
           <button className="btn btn-primary" disabled={pending}>
             {pending ? "Kaydediliyor…" : id ? "Değişiklikleri kaydet" : "QR oluştur"}
           </button>
-          {saved && id && <span className="text-sm text-ok" role="status">Kaydedildi</span>}
+          {saved && id && (
+            <span className="chip bg-ok-soft text-ok" role="status"><IconCheck /> Kaydedildi</span>
+          )}
+          {error && (
+            <span className="notice bg-danger-soft py-1.5 text-danger" role="alert"><IconWarn />{error}</span>
+          )}
         </div>
       </div>
 
-      <aside className="space-y-6 lg:sticky lg:top-6 lg:self-start">
+      <aside className="space-y-6 lg:sticky lg:top-8 lg:self-start">
         {shortUrl ? (
           <QrPreview data={shortUrl} style={v.style} fileName={`qr-${slug ?? "kod"}`} />
         ) : (
-          <div className="proof text-center text-sm text-muted">
-            <span className="crop" aria-hidden />
-            <div className="pointer-events-none opacity-40">
-              <QrPreview data="https://ornek" style={v.style} showDownloads={false} />
-            </div>
-            <p className="mt-4">Kısa link ilk kayıtta oluşur. İndirme kayıttan sonra açılır.</p>
-          </div>
+          <QrPreview data="" style={v.style} showDownloads={false} emptyText="Kısa link ilk kayıtta oluşur. QR ve indirme düğmeleri o zaman açılır." />
         )}
         {aside}
       </aside>

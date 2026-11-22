@@ -12,12 +12,19 @@ export function QrThumb({ data, style }: { data: string; style: QrStyle }) {
       const el = ref.current;
       if (cancelled || !el) return;
       el.innerHTML = "";
-      new Qr(buildQrOptions(data, style, 112)).append(el);
+      new Qr(buildQrOptions(data, style, 128)).append(el);
       el.querySelector("svg")?.setAttribute("style", "width:100%;height:100%");
     });
     return () => {
       cancelled = true;
     };
   }, [data, style]);
-  return <div ref={ref} aria-hidden className="h-14 w-14 shrink-0 rounded border border-line" style={{ background: style.bg }} />;
+  return (
+    <div
+      ref={ref}
+      aria-hidden
+      className="h-16 w-16 shrink-0 overflow-hidden rounded-lg shadow-[0_1px_2px_rgb(0_0_0/0.08),0_6px_14px_-8px_rgb(0_0_0/0.3)]"
+      style={{ background: style.bg }}
+    />
+  );
 }

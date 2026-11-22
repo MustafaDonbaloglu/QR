@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type QRCodeStyling from "qr-code-styling";
 import { buildQrOptions } from "@/lib/qr-options";
 import type { QrStyle } from "@/lib/style";
+import { IconDownload } from "./icons";
 
 type Props = {
   data: string;
@@ -11,6 +12,7 @@ type Props = {
   size?: number;
   fileName?: string;
   showDownloads?: boolean;
+  emptyText?: string;
 };
 
 async function makeQr(data: string, style: QrStyle, size: number): Promise<QRCodeStyling> {
@@ -18,7 +20,14 @@ async function makeQr(data: string, style: QrStyle, size: number): Promise<QRCod
   return new Qr(buildQrOptions(data, style, size));
 }
 
-export function QrPreview({ data, style, size = 280, fileName = "qr", showDownloads = true }: Props) {
+export function QrPreview({
+  data,
+  style,
+  size = 260,
+  fileName = "qr",
+  showDownloads = true,
+  emptyText = "İçerik girildiğinde QR burada görünür.",
+}: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState(false);
   const empty = data.trim() === "";
@@ -55,31 +64,30 @@ export function QrPreview({ data, style, size = 280, fileName = "qr", showDownlo
   }
 
   return (
-    <div className="space-y-4">
-      <div className="proof mx-auto w-full" style={{ maxWidth: size + 58 }}>
-        <span className="crop" aria-hidden />
-        <div
-          ref={ref}
-          role="img"
-          aria-label="QR önizleme"
-          className="aspect-square w-full"
-          style={{ background: empty ? "transparent" : style.bg }}
-        >
-          {empty && (
-            <div className="grid h-full place-items-center text-center text-sm text-muted">
-              İçerik girildiğinde QR burada görünür.
-            </div>
-          )}
+    <div className="panel overflow-hidden">
+      <div className="stage px-8 py-9">
+        <div className="proof mx-auto w-full" style={{ maxWidth: size + 44, background: empty ? "#fff" : style.bg }}>
+          <span className="crop" aria-hidden />
+          <div ref={ref} role="img" aria-label="QR önizleme" className="aspect-square w-full">
+            {empty && (
+              <div className="grid h-full place-items-center px-4 text-center text-sm text-[#7b8a85]">{emptyText}</div>
+            )}
+          </div>
         </div>
       </div>
       {showDownloads && (
-        <div className="flex justify-center gap-2">
-          <button type="button" className="btn btn-ghost" disabled={empty || busy} onClick={() => download("png")}>
-            PNG indir
-          </button>
-          <button type="button" className="btn btn-ghost" disabled={empty || busy} onClick={() => download("svg")}>
-            SVG indir
-          </button>
+        <div className="flex items-center justify-between gap-3 border-t border-line px-5 py-3.5">
+          <span className="text-xs text-muted">Telefon kamerasıyla okutup dene.</span>
+          <div className="flex gap-2">
+            <button type="button" className="btn btn-ghost px-3 py-2" disabled={empty || busy} onClick={() => download("png")}>
+              <IconDownload />
+              PNG
+            </button>
+            <button type="button" className="btn btn-ghost px-3 py-2" disabled={empty || busy} onClick={() => download("svg")}>
+              <IconDownload />
+              SVG
+            </button>
+          </div>
         </div>
       )}
     </div>

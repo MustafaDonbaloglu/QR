@@ -1,0 +1,33 @@
+# Dokploy kullanmadan, herhangi bir sunucuda çalıştırmak için.
+# Kullanım: .env dosyasını oluştur (bkz. README), sonra: docker compose up -d --build
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: qr
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD gerekli}
+      POSTGRES_DB: qr
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U qr -d qr"]
+      interval: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://qr:${POSTGRES_PASSWORD}@db:5432/qr
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD gerekli}
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET gerekli}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:?PUBLIC_BASE_URL gerekli}
+    ports:
+      - "3000:3000"
+
+volumes:
+  db-data:

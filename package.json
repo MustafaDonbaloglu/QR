@@ -33,5 +33,7 @@
     "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "vitest": "^5.1.1"
-  }
+  },
+  "license": "MIT",
+  "description": "Kendi sunucunda \u00e7al\u0131\u015fan dinamik ve statik QR kod y\u00f6neticisi"
 }
